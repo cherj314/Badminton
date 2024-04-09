@@ -1,10 +1,7 @@
 {
   "ExpandedNodes": [
-    "",
-    "\\badminton-api",
-    "\\badminton-api\\models",
-    "\\src"
+    ""
   ],
-  "SelectedNode": "\\badminton-api\\index.js",
+  "SelectedNode": "\\badminton-api",
   "PreviewInSolutionExplorer": false
 }
