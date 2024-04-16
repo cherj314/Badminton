@@ -7,15 +7,13 @@ const Draws = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Function to fetch game data by ID
-    const fetchGameData = async (gameId) => {
+    // Function to fetch match data by ID
+    const fetchGameData = async (matchId) => {
         try {
-            // Here, we're assuming that your backend has an endpoint to fetch a game by ID
-            // which would look like `http://localhost:3001/games/:gameId`
-            const response = await axios.get(`http://localhost:3001/games/${gameId}`);
+            const response = await axios.get(`http://localhost:3001/matches/${matchId}`);
             return response.data;
         } catch (error) {
-            console.error(`Error fetching game data for ID ${gameId}: `, error);
+            console.error(`Error fetching match data for ID ${matchId}: `, error);
             throw error; // Re-throw the error to be handled by the caller
         }
     };
@@ -25,7 +23,7 @@ const Draws = () => {
         setError('');
         try {
             const response = await axios.post('http://localhost:3001/generate-all-draws');
-            console.log('Received draws data:', response.data);
+            console.log('Received draws data:', response.data); // Log the response data
             const matches = await adaptMatchesForSingleElimination(response.data);
             setDraws(matches);
         } catch (error) {
@@ -75,7 +73,8 @@ const Draws = () => {
     };    
     
     const matches = draws.length > 0 ? adaptMatchesForSingleElimination(draws) : [];
-
+    console.log('Matches:', matches);
+    console.log('Draws:', draws);
     return (
         <div>
             <h1>Tournament Draws</h1>
@@ -92,8 +91,10 @@ const Draws = () => {
                         </SVGViewer>
                     )}
                 />
+            ) : draws.length > 0 ? (
+                <p>No games available for these draws.</p>
             ) : (
-                draws.length > 0 && <p>No games available for these draws.</p>
+                <p>No draws data loaded.</p>
             )}
         </div>
     );

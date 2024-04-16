@@ -4,10 +4,10 @@ const DrawSchema = new mongoose.Schema({
     event: String,
     rounds: [{
         name: String,
-        games: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Game' }]
+        matches: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Match' }]  // Changed games to matches
     }],
-    type: String,  // "main" or "consolation"
-    grade: Number  // Add grade if you need to filter draws by grade
+    type: String,
+    grade: Number
 });
 
 module.exports = mongoose.model('Draw', DrawSchema);
