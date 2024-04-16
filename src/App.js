@@ -1,18 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Home from './Home'; // Adjust the path according to your project structure
-import logo from './logo.svg';
-import './App.css';
+import Home from './Home';
+import Draws from './Draws';
 
 function App() {
-    return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<Home />} />
-                {/* Define other routes here, using the `element` prop */}
-            </Routes>
-        </Router>
-    );
+  return (
+    <Router>
+      <Routes>  // Use 'Routes' instead of 'Switch'
+        <Route path="/" element={<Home />} />  // Update syntax for defining routes
+        <Route path="/draws" element={<Draws />} />
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;

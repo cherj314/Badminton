@@ -5,7 +5,7 @@ function PlayerProfile({ player }) {
     <div>
       <h2>{player.name}</h2>
       <p>Age: {player.age}</p>
-      <p>School: {player.school}</p>
+      <p>School: {player.schoolName}</p> {/* Render player's school name */}
     </div>
   );
 }

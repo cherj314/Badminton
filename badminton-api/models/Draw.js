@@ -1,15 +1,13 @@
 const mongoose = require('mongoose');
 
 const DrawSchema = new mongoose.Schema({
-    games: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Game', required: true }],
-    participants: [{
-        type: mongoose.Schema.Types.ObjectId,
-        refPath: 'onModel'
+    event: String,
+    rounds: [{
+        name: String,
+        games: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Game' }]
     }],
-    onModel: {
-        type: String,
-        enum: ['Player', 'Team']
-    }
-}, { timestamps: true });
+    type: String,  // "main" or "consolation"
+    grade: Number  // Add grade if you need to filter draws by grade
+});
 
 module.exports = mongoose.model('Draw', DrawSchema);

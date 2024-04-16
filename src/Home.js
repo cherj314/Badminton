@@ -1,141 +1,181 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import './Home.css';
 
 function Home() {
     const [players, setPlayers] = useState([]);
-    const [draws, setDraws] = useState([]);
-    const [selectedDraw, setSelectedDraw] = useState(null);
+    const [schools, setSchools] = useState([]);
+    const [newPlayerName, setNewPlayerName] = useState('');
+    const [newPlayerGrade, setNewPlayerGrade] = useState('');
+    const [newPlayerSchool, setNewPlayerSchool] = useState('');
+    const [newPlayerEvent, setNewPlayerEvent] = useState('');
+    const [newPlayerPartner, setNewPlayerPartner] = useState('');
+    const [refresh, setRefresh] = useState(true);
 
     useEffect(() => {
         fetch('http://localhost:3001/players')
-            .then(response => response.json())
-            .then(data => setPlayers(data))
-            .catch(error => console.log('Error fetching players:', error));
-
-        // Fetch draws when the component mounts
-        fetch('http://localhost:3001/draws')
-            .then(response => response.json())
-            .then(data => setDraws(data))
-            .catch(error => console.log('Error fetching draws:', error));
-    }, []);
+        .then(response => response.json())
+        .then(playerData => {
+            console.log('Players:', playerData);
+            setPlayers(playerData);
+            // Fetch schools after fetching players
+            return fetch('http://localhost:3001/schools');
+        })
+        .then(response => response.json())
+        .then(schoolData => {
+            console.log('Fetched schools:', schoolData);
+            setSchools(schoolData.reduce((acc, school) => ({ ...acc, [school._id]: school }), {}));
+        })
+        .catch(error => console.log('Error fetching data:', error));
+    }, [refresh]);
 
     const handleCreatePlayer = () => {
-
-        const playerName = `Player ${new Date().getTime()}`; // Example player name
-        const playerAge = `14`; 
-        const playerSchool = `School ${new Date().getTime()}`; 
+        if (!newPlayerName || !newPlayerGrade || !newPlayerSchool || !newPlayerEvent) {
+            alert('Please fill in all fields.');
+            return;
+        }
+    
+        const playerData = {
+            name: newPlayerName,
+            grade: newPlayerGrade,
+            school: newPlayerSchool,
+            event: newPlayerEvent,
+            partner: (newPlayerEvent === 'BD' || newPlayerEvent === 'GD' || newPlayerEvent === 'XD') ? newPlayerPartner : null
+        };
 
         fetch('http://localhost:3001/players', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ age: playerAge , name: playerName, school: playerSchool }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(playerData)
         })
-            .then(response => response.json())
-            .then(data => {
-                alert('Team created successfully!');
-                console.log(data);
-                // Here you might want to update your application state or re-fetch teams
-            })
-            .catch((error) => {
-                console.error('Error creating team:', error);
-            });
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to create player. Server responded with ' + response.statusText);
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert('Player created successfully!');
+            setPlayers(prevPlayers => [...prevPlayers, data]);
+            setNewPlayerName('');
+            setNewPlayerGrade('');
+            setNewPlayerSchool('');
+            setNewPlayerEvent('');
+            setNewPlayerPartner('');
+            setRefresh(refresh => !refresh);  // Trigger a refresh to fetch all data again
+        })        
+        .catch((error) => {
+            console.error('Error creating player:', error);
+            alert('Failed to create player. ' + error.message);
+        });
     };
 
-    const handleCreateTeam = () => {
-        if (players.length < 2) {
-            alert("Not enough players to form a team.");
-            return;
-        }
-
-        // Simplification: select the first two players (replace this with user selection)
-        const teamPlayers = players.slice(0, 2).map(player => player._id);
-        const teamName = `Team ${new Date().getTime()}`; // Example team name
-
-        fetch('http://localhost:3001/teams', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ players: teamPlayers, name: teamName }),
-        })
-            .then(response => response.json())
-            .then(data => {
-                alert('Team created successfully!');
-                console.log(data);
-                // Here you might want to update your application state or re-fetch teams
-            })
-            .catch((error) => {
-                console.error('Error creating team:', error);
-            });
+    const handleEventChange = (event) => {
+        setNewPlayerEvent(event.target.value);
     };
 
+    const handlePartnerChange = (event) => {
+        setNewPlayerPartner(event.target.value);
+    };
+        
+    
+    const findSchoolName = (school) => {
+        return school ? school.name : 'Unknown School';
+    };    
 
-    const handleCreateDraw = () => {
-        // Simplification: This assumes you have game IDs to use
-        // In a real scenario, you'd likely have a selection process for games to include in the draw
-        const exampleGameIds = ['GameId1', 'GameId2']; // Replace with actual game IDs from your application
-
-        fetch('http://localhost:3001/draws', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ games: exampleGameIds }),
-        })
-            .then(response => response.json())
-            .then(data => {
-                alert('Draw created successfully!');
-                console.log(data);
-                // Update state or UI accordingly
-            })
-            .catch((error) => {
-                console.error('Error creating draw:', error);
-            });
+    const findPlayersInSchool = (schoolId) => {
+        return players.filter(player => player.school === schoolId);
     };
 
-
-    const handleSelectDraw = (drawId) => {
-        // Fetch the selected draw's games
-        fetch(`http://localhost:3001/draws/${drawId}`)
-            .then(response => response.json())
-            .then(data => setSelectedDraw(data))
-            .catch(error => console.log('Error fetching draw details:', error));
+    const handleSchoolChange = (event) => {
+        setNewPlayerSchool(event.target.value);
     };
 
     return (
         <div>
             <h1>Players</h1>
-            <button onClick={handleCreateTeam}>Create New Team</button>
-            <button onClick={handleCreateDraw}>Create New Draw</button>
-            <button onClick={handleCreatePlayer}>Create New Player</button>
             <div>
-                <h2>Draws</h2>
-                <ul>
-                    {draws.map((draw) => (
-                        <li key={draw._id} onClick={() => handleSelectDraw(draw._id)}>{draw.name}</li>
+                <label>Name:</label>
+                <input type="text" value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} />
+                <label>Grade:</label>
+                <input type="number" value={newPlayerGrade} onChange={(e) => setNewPlayerGrade(e.target.value)} />
+                <label>School:</label>
+                <select value={newPlayerSchool} onChange={(e) => setNewPlayerSchool(e.target.value)}>
+                    <option value="">Select School</option>
+                    {Object.values(schools).map(school => (
+                        <option key={school._id} value={school._id}>{school.name}</option>
                     ))}
-                </ul>
+                </select>
+                <label>Event:</label>
+                <select value={newPlayerEvent} onChange={(e) => setNewPlayerEvent(e.target.value)}>
+                    <option value="">Select Event</option>
+                    <option value="BS">Boys Singles (BS)</option>
+                    <option value="GS">Girls Singles (GS)</option>
+                    <option value="BD">Boys Doubles (BD)</option>
+                    <option value="GD">Girls Doubles (GD)</option>
+                    <option value="XD">Mixed Doubles (XD)</option>
+                </select>
+                {(newPlayerEvent === 'BD' || newPlayerEvent === 'GD' || newPlayerEvent === 'XD') && (
+                    <div>
+                        <label>Partner:</label>
+                        <select value={newPlayerPartner} onChange={(e) => setNewPlayerPartner(e.target.value)}>
+                            <option value="">Select Partner</option>
+                            {players.filter(p => p.grade === newPlayerGrade && p.event === newPlayerEvent).map(player => (
+                                <option key={player._id} value={player._id}>{player.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
             </div>
+            <button onClick={handleCreatePlayer}>Create New Player</button>
             <table>
                 <thead>
                     <tr>
-                        <th>Game</th>
-                        <th>Participants</th>
-                        <th>Winner</th>
+                        <th>Name</th>
+                        <th>Grade</th>
+                        <th>School</th>
+                        <th>Event</th>
+                        <th>Partner</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {selectedDraw && selectedDraw.games.map((game, index) => (
-                        <tr key={index}>
-                            <td>{`Game ${index + 1}`}</td>
-                            <td>{game.participants.map(participant => participant.name).join(' vs ')}</td>
-                            <td>{game.winner.name}</td>
+                    {players.map(player => (
+                        <tr key={player._id}>
+                            <td>{player.name}</td>
+                            <td>{player.grade}</td>
+                            <td>{findSchoolName(player.school)}</td>
+                            <td>{player.event}</td>
+                            <td>{player.partner ? player.partner.name : 'None'}</td>
                         </tr>
                     ))}
                 </tbody>
             </table>
+            <h1>Schools</h1>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Location</th>
+                        <th>Players</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {Object.values(schools).map(school => (
+                        <tr key={school._id}>
+                            <td>{school.name}</td>
+                            <td>{school.location}</td>
+                            <td>
+                                <ul>
+                                    {findPlayersInSchool(school._id).map(player => (
+                                        <li key={player._id}>{player.name}</li>
+                                    ))}
+                                </ul>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+            <Link to="/draws">Go to Draws</Link>
         </div>
     );
 }
